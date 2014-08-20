@@ -1,32 +1,7 @@
 <?php
 
-require_once('prelude.php');
+require_once(__DIR__ . '/vendor/autoload.php');
 
-/**
- * A simple test framework:
- *  - Declare tests with deftest('name', function() {});
- *  - List all tests with tests($_)
- *  - Run tests with run_test('name')
- *   - The function will be called
- *   - If it takes arguments, random ints will be provided
- *   - Return a boolean indicating success
- */
-
-call_user_func(function() {
-    $t = [];
-    defun('tests',   function($_)     use (&$t) { return keys($t); });
-    defun('deftest', function($n, $f) use (&$t) {
-        $t[$n] = [uncurry($f), arity($f)];
-    });
-    defun('run_test', function($n)     use (&$t) {
-        $f = function($a) { return $a[0](sample('random', $a[1])); };
-        return $n? $f($t[$n])
-                 : keys(filter('bNot', map($f, $t)));
-    });
-});
-
-// Define groups of tests at once
-defun('deftests', key_map('deftest'));
 
 deftests([
   // Test the test framework
@@ -40,8 +15,8 @@ deftests([
 
   'sample1' => function($n) { return eq(sample('id', 4),  upto(4));  },
   'sample2' => function($n) { return eq(sample('id', $n), upto($n)); },
-
-  'skip1' => function($x) { return skip(1, 'id', $x, true); },
+/*
+  //'skip1' => function($x) { return skip(1, 'id', $x, true); },
   'skip2' => function() {
                return eq(array_map(skip(1, 'id'),
                                    ['a', 'b', 'c'],
@@ -83,34 +58,34 @@ deftests([
 
   // Composition should interact properly with currying
   'compose1' => function($x, $y, $z) {
-                  return eq(∘(plus($x), mult($y), $z),
+                  return eq(call(compose(plus($x), mult($y)), $z)),
                             $x + ($y * $z));
                 },
   'compose2' => function($x, $y, $z) {
-                  return eq(call(∘(mult($x), plus($y)), $z),
+                  return eq(call(compose(mult($x), plus($y)), $z),
                             $x * ($y + $z));
                 },
   'compose3' => function($x, $y, $z) {
-                  return eq(∘(flip('map', [$x, $y]),  'plus', $z),
+                  return eq(call(compose(flip('map', [$x, $y]), 'plus'), $z),
                             [$x + $z, $y + $z]);
                 },
   'compose4' => function($n) {
-                  return eq(∘('id', 'id', $n), $n);
+                  return eq(call(compose('id', 'id'), $n), $n);
                 },
   'compose5' => function($x, $y, $z) {
-                  return eq(∘(plus($x), plus($y), $z),
+                  return eq(call(compose(plus($x), plus($y)), $z),
                             $x + $y + $z);
                 },
   'compose6' => function($x, $y, $z) {
-                  return eq(∘(flip('plus', $x), plus($y), $z),
+                  return eq(call(compose(flip('plus', $x), plus($y)), $z),
                             $x + $y + $z);
                 },
   'compose7' => function($x, $y, $z) {
-                  return eq(call(∘(flip('map', [$x, $y]),  'plus'), $z),
+                  return eq(call(compose(flip('map', [$x, $y]), 'plus'), $z),
                             [$x + $z, $y + $z]);
                 },
   'compose8' => function($x, $y) {
-                  return eq(∘(with($x), 'plus', $y), $x + $y);
+                  return eq(call(compose(with($x), 'plus'), $y), $x + $y);
                 },
 
   'sum' => function() {
@@ -182,8 +157,11 @@ deftests([
                       return eq($lhs, $rhs)?:
                              dump(get_defined_vars());
                     },
+*/
 ]);
 
-call(function() {
-       if ($results = run_test(null)) var_dump($results);
-     });
+$failures? var_dump(array('Test failures' => $failures))
+         : (print "All tests passed\n");
+call_user_func(function() {
+                 if ($results = run_test(null)) var_dump($results);
+               });

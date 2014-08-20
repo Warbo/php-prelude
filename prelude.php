@@ -9,108 +9,13 @@
  */
 
 // Errors are unacceptable
-set_error_handler(function() { var_dump(debug_backtrace()); die(); });
-
-// Bootstrap in a private scope
-call_user_func(
-  function() {
-    // All functions should be curried, so we implement that first.
-    $c_sentinel = mt_rand();
-    $d_sentinel = mt_rand();
-
-    // $curry_n accumulates N arguments for a function
-    $curry_n = function($args, $n, $f) use (&$curry_n, $c_sentinel) {
-                 // Always return a function, to make function application nicer
-                 return function() use ($args, $n, $f, &$curry_n, $c_sentinel) {
-                          // Gather our arguments and split off the first $n
-                          $args = array_merge($args, func_get_args());
-                          $init = array_slice($args, 0, $n);
-                          // Do we have enough to call $f?
-                          return (count($init) === $n)
-                            // Yes. Send $init to $f, apply the return value to
-                            // any extras (one-at-a-time, to allow for "manual"
-                            // currying)
-                            ? array_reduce(array_slice($args, $n),
-                                          'call_user_func',
-                                           call_user_func_array($f, $init))
-                            // No. Curry what we have and wait for more
-                            : $curry_n($args, $n, $f);
-                        };
-               };
-
-  // Find a function's arity, even if it's curried or defined with defun
-  $arity = function($f) use (&$arity, $c_sentinel, $d_sentinel) {
-             // Inspect the static environment of $f
-             $rf = new ReflectionFunction($f);
-             $sv = $rf->getStaticVariables();
-
-             if (isset($sv['c_sentinel']) &&
-                !isset($sv['d_sentinel']) &&
-                 $sv['c_sentinel'] === $c_sentinel) {
-               // We're curried. Find the arity of the function we're wrapping
-
-               // If we accept arguments, our arity is how many we still need
-               if ($sv['n'] > 0) return $sv['n'] - count($sv['args']);
-
-               // We're a wrapper around some f, return its arity instead
-               if (isset($sv['f'])) return $arity($sv['f']);
-             }
-
-             // If we're a defun wrapper, return the arity of our
-             // implementation
-             if (isset($sv['d_sent']) &&
-                 $sv['d_sent'] === $d_sentinel) return $arity($sv['f']);
-
-             // Otherwise, we're a regular function, so reflect the arity back
-             return $rf->getNumberOfParameters();
-           };
-
-  $curry = function($f) use ($curry_n, $arity) {
-             return $curry_n([], $arity($f), $f);
-           };
-
-  // Define immutable, global, curried functions
-  $defun = function($name, $body) use ($curry, $d_sentinel, $c_sentinel) {
-             // Source: http://www.php.net/manual/en/functions.user-defined.php
-             $valid = '/[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*/';
-             array_map(
-               function($x) { if ($x[1]) throw new Exception($x[0]); },
-               [["Invalid name for $name", !preg_match($valid, $name)],
-                ["Cannot redeclare $name", function_exists($name)    ],
-                ["Invalid body for $name", !is_callable($body, TRUE)]]);
-
-             // Declare $name globally, with a static variable for $body
-             eval("function {$name}() {
-                     static \$d_sent = NULL;
-                     static \$f = NULL;
-                     if (is_null(\$f)) {
-                       list(\$f, \$d_sent) = func_get_args();
-                       return;
-                     }
-                     return call_user_func_array(\$f, func_get_args());
-                   }");
-             $name($curry($body), $d_sentinel);  // Populate the statics
-           };
-
-  // Export these definitions
-  $defun('defun',   $defun);
-   defun('curry',   $curry);
-   defun('arity',  $arity);
-   defun('curry_n', function($n, $f) use ($curry_n) {
-                      return $curry_n([], $n, $f);
-                    });
+set_error_handler(function() {
+  var_dump(array('args'  => func_get_args(),
+                 'trace' => debug_backtrace()));
+  die();
 });
 
-defun('key_map', function($f, $a) {
-                   return array_combine(array_keys($a),
-                                        array_map($f, array_keys($a), $a));
-                 });
-
-defun('defuns', key_map('defun'));
-
 defuns([
-  'uncurry' => curry_n(2, 'call_user_func_array'),
-  'sample'  => function($f, $n) { return $n? map($f, upto($n)) : []; },
   'skip'    => function($n, $f) {
                  return nary(function() use ($n, $f) {
                                return uncurry($f,
@@ -174,26 +79,27 @@ defuns([
             }]);
 
 defuns(['with' => flip(apply(2)),
-        'over' => flip('map'),
-        '∘'    => function($f, $g, $x) { return $f($g($x)); }]);
+        'over' => flip('map')]);
 
-
-defun('new_', function($x, $y) {
-                return with($y, [new ReflectionClass($x),
-                                 'newInstanceArgs']);
-              });
+function compose($a, $b) {
+  $funcs = array_reverse(func_get_args());
+  $f     = op(array_shift($funcs));
+  return function($x) use ($funcs, $f) {
+           static $curried = true;
+           return curry(array_reduce(
+                          $funcs,
+                          function($x, $f) {
+                            return call_user_func(op($f), $x);
+                          },
+                          call_user_func_array($f, func_get_args())));
+         };
+}
 
 defun('implode_',  'implode');
 defun('join_',     implode_(''));
 defun('concat',    function($n) {
-                     return ∘('join_', array_($n));
+                     return compose('join_', array_($n));
                    });
-defun('papply',    nary(function($f) {
-                     $args = array_slice(func_get_args(), 1);
-                     return nary(function() use ($f, $args) {
-                       return uncurry($f, merge($args, func_get_args()));
-                     });
-                   }));
 defun('thunk',     function($x, $_) { return $x; });
 defun('nil',       thunk([]));
 defuns(['filter' => flip(nary('array_filter', 2)),
@@ -206,7 +112,7 @@ defuns(['keys'      => nary('array_keys',   1),
                          return array_reduce($arr, $f, $zero);
                        },
         'key_foldr' => function($f, $zero) {
-                         return ∘(foldr($f, $zero), key_map(array_(2)));
+                         return compose(foldr($f, $zero), key_map(array_(2)));
                        },
         'subscript' => function($x, $y) { return $x[$y]; },
         'take'      => function($n, $a) { return array_slice($a, 0, $n); },
@@ -236,7 +142,7 @@ defuns(['keys'      => nary('array_keys',   1),
                                      array_slice($arr, 1));
                        },
         'second'    => function($f) {
-                         return ∘('swap', ∘(first($f), 'swap'));
+                         return compose('swap', first($f), 'swap');
                        },
         'head'      => function($arr) { return $arr[0]; },
         'delay'     => function($f, $args, $_) {
@@ -277,6 +183,17 @@ defun('mem',   function($cmd) {
 defun('runphp', function($f, $arg) {
                   return "./runphp '{$f}({$arg})'";
                 });
+
+function papply() {
+  $args    = func_get_args();
+  $f       = op(array_shift($args));
+  return function() use ($args, $f) {
+           static $curried = true;
+           return call_user_func_array('call_user_func',
+                                       array_merge($args, func_get_args()));
+         };
+};
+
 
 defun('parens', function($x) { return "($x)"; });
 
@@ -337,4 +254,3 @@ defun('stream_drop', function($n, $s) {
                      });
 
 defun('dump', nary('var_dump', 1));
-defun('call', apply(1));

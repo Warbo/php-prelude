@@ -1,0 +1,8 @@
+{
+    "name": "warbo/prelude",
+    "description": "A library of useful functions",
+    "license": "CC0-1.0",
+    "autoload": { "files": ["prelude.php"] },
+    "require": { "warbo/core": "dev-master",
+                 "warbo/easycheck": "dev-master" }
+}
