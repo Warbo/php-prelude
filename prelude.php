@@ -147,8 +147,7 @@ defuns(['keys'      => nary('array_keys',   1),
         'head'      => function($arr) { return $arr[0]; },
         'delay'     => function($f, $args, $_) {
                          return call_user_func_array($f, $args);
-                       },
-        'random'    => function($_) { return mt_rand(0, 200); }]);
+                       }]);
 
 defun('format',    function($x) {
                      return is_float($x)
