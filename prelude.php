@@ -86,12 +86,11 @@ function compose($a, $b) {
   $f     = op(array_shift($funcs));
   return function($x) use ($funcs, $f) {
            static $curried = true;
-           return curry(array_reduce(
-                          $funcs,
-                          function($x, $f) {
-                            return call_user_func(op($f), $x);
-                          },
-                          call_user_func_array($f, func_get_args())));
+           return array_reduce($funcs,
+                               function($x, $f) {
+                                 return call_user_func(op($f), $x);
+                               },
+                               call_user_func_array($f, func_get_args()));
          };
 }
 

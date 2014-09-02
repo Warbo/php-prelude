@@ -2,92 +2,98 @@
 
 require_once(__DIR__ . '/vendor/autoload.php');
 
-
 deftests([
   // Test the test framework
   'run_test1' => function($n) {
-                   return eq(count(func_get_args()), 1);
+                   return count(func_get_args()) !== 1;
                  },
   'run_test2' => function($a, $b, $c) {
-                   return (is_int($a) && is_int($b) && is_int($c))?:
-                          dump(get_defined_vars());
+                   return (is_int($a) && is_int($b) && is_int($c))
+                     ? 0
+                     : dump(get_defined_vars());
                  },
+  'sample1' => function($n) { return sample('id', 4)  !== upto(4);  },
+  'sample2' => function($n) {
+                 return sample('id', $n % 100) !== upto($n % 100);
+               },
 
-  'sample1' => function($n) { return eq(sample('id', 4),  upto(4));  },
-  'sample2' => function($n) { return eq(sample('id', $n), upto($n)); },
-/*
-  //'skip1' => function($x) { return skip(1, 'id', $x, true); },
+  'skip1' => function($x) { return skip(1, 'id', $x, false); },
   'skip2' => function() {
-               return eq(array_map(skip(1, 'id'),
-                                   ['a', 'b', 'c'],
-                                   ['x', 'y', 'z']),
-                         ['x', 'y', 'z']);
+               return array_map(skip(1, 'id'),
+                                ['a', 'b', 'c'],
+                                ['x', 'y', 'z'])
+                      !== ['x', 'y', 'z'];
              },
 
   // Check that our currying infrastructure works as expected
-  'curry'   => function() { return eq(id('plus', 5, 3), 8); },
+  'curry'   => function() { return id('plus', 5, 3) !== 8; },
   'curry_n' => function() {
-                 return eq(curry_n(3, 'array_merge', [1], [2], [3]),
-                           [1, 2, 3]);
+                 return curry_([], 3, 'array_merge', [1], [2], [3])
+                        !== [1, 2, 3];
                },
   'nary'    => function() {
                  $n = mt_rand(2, 50);
-                 return eq(uncurry(nary(function() {
-                                          return sum(func_get_args());
-                                        },
-                                        $n),
-                                   range(1, $n)),
-                           sum(range(1, $n)));
+                 return uncurry(nary(function() {
+                                       return sum(func_get_args());
+                                     },
+                                     $n),
+                                range(1, $n))
+                        !== sum(range(1, $n));
                },
+
   'arity1' => function() {
-                 return eq(arity(function($a, $b) {}), 2);
+                 return arity(function($a, $b) {}) !== 2;
                },
-  'arity2' => function($n) { return eq(arity(nary(function() {}, $n)), $n); },
-  'arity3' => function()   { return eq(arity(     'plus'),              2); },
-  'arity4' => function()   { return eq(arity(      plus(2)),            1); },
-  'arity5' => function()   { return eq(arity(flip('plus')),             2); },
+  'arity2' => function($n) {
+                return arity(nary(function() {}, $n % 100)) !== $n % 100;
+              },
+  'arity3' => function()   { return arity(     'plus')   !== 2;  },
+  'arity4' => function()   { return arity(      plus(2)) !== 1;  },
+  'arity5' => function()   { return arity(flip('plus'))  !== 2;  },
 
   'key_map' => function() {
-                 return eq(key_map('plus', [1 => 2, 4 => 8,  16 => 32]),
-                           [1 => 3, 4 => 12, 16 => 48]);
+                 return key_map('plus', [1 => 2, 4 => 8,  16 => 32])
+                        !== [1 => 3, 4 => 12, 16 => 48];
                },
 
   // Rearranging function arguments
-  'flip1' => function() { return(eq(flip(array_(2), 1, 2),          [2, 1])); },
-  'flip2' => function() { return eq(flip('map', [-1, -2], plus(5)), [4, 3]);  },
+  'flip1' => function() { return flip(array_(2), 1, 2)          !== [2, 1]; },
+  'flip2' => function() { return flip('map', [-1, -2], plus(5)) !== [4, 3]; },
 
   // Composition should interact properly with currying
   'compose1' => function($x, $y, $z) {
-                  return eq(call(compose(plus($x), mult($y)), $z)),
-                            $x + ($y * $z));
+                  return call(compose(plus($x), mult($y)), $z)
+                         !== $x + ($y * $z);
                 },
+/*
   'compose2' => function($x, $y, $z) {
-                  return eq(call(compose(mult($x), plus($y)), $z),
-                            $x * ($y + $z));
+                  return call(compose(mult($x), plus($y)), $z)
+                         !== $x * ($y + $z);
                 },
   'compose3' => function($x, $y, $z) {
-                  return eq(call(compose(flip('map', [$x, $y]), 'plus'), $z),
-                            [$x + $z, $y + $z]);
+                  return call(compose(flip('map', [$x, $y]), 'plus'), $z)
+                         !== [$x + $z, $y + $z];
                 },
   'compose4' => function($n) {
-                  return eq(call(compose('id', 'id'), $n), $n);
+                  return call(compose('id', 'id'), $n)
+                         !== $n;
                 },
   'compose5' => function($x, $y, $z) {
-                  return eq(call(compose(plus($x), plus($y)), $z),
-                            $x + $y + $z);
+                  return call(compose(plus($x), plus($y)), $z)
+                         !== $x + $y + $z;
                 },
   'compose6' => function($x, $y, $z) {
-                  return eq(call(compose(flip('plus', $x), plus($y)), $z),
-                            $x + $y + $z);
+                  return call(compose(flip('plus', $x), plus($y)), $z)
+                         !== $x + $y + $z;
                 },
   'compose7' => function($x, $y, $z) {
-                  return eq(call(compose(flip('map', [$x, $y]), 'plus'), $z),
-                            [$x + $z, $y + $z]);
+                  return call(compose(flip('map', [$x, $y]), 'plus'), $z)
+                         !== [$x + $z, $y + $z];
                 },
   'compose8' => function($x, $y) {
-                  return eq(call(compose(with($x), 'plus'), $y), $x + $y);
+                  return call(compose(with($x), 'plus'), $y) !== $x + $y;
                 },
-
+/*
   'sum' => function() {
       return eq(sum($xs = range(0, mt_rand(1, 100))),
         array_reduce($xs, 'plus', 0));
@@ -160,8 +166,7 @@ deftests([
 */
 ]);
 
+$failures = runtests(null);
+
 $failures? var_dump(array('Test failures' => $failures))
          : (print "All tests passed\n");
-call_user_func(function() {
-                 if ($results = run_test(null)) var_dump($results);
-               });
