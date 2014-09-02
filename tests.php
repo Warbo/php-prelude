@@ -106,67 +106,69 @@ deftests([
   'between1' => function() {
                   return between(5, 10) !== [5, 6, 7, 8, 9, 10];
                 },
-/*
+
   'b_then' => function($n) {
-      return eq(branch(thunk($n),
-      null,
-      thunk(true),
-        null),
-        $n);
-    },
-    'b_else' => function($n) {
-        return eq(branch(null,
-        thunk($n),
-        thunk(false),
-        null),
-        $n);
-    },
+                return branch(thunk($n),
+                              null,
+                              thunk(true),
+                              null)
+                  !== $n;
+              },
+  'b_else' => function($n) {
+                return branch(null,
+                              thunk($n),
+                              thunk(false),
+                              null)
+                  !== $n;
+              },
 
   // General recursion
   'until1'      => function($n) {
-                     return eq(until(function($args) use ($n) {
-                                       list($m, $arr) = $args;
-                                       return [$m === $n,
-                                               [$m + 1, snoc($m, $arr)]];
-                                     },
-                                     [0, []]),
-                               [$n + 1, upto($n+1)]);
+                     $x = $n % 100;
+                     return until(function($args) use ($x) {
+                                    list($m, $arr) = $args;
+                                    return [$m === $x,
+                                            [$m + 1, snoc($m, $arr)]];
+                                  },
+                                  [0, []])
+                       !== [$x+1, upto($x+1)];
                    },
   'trampoline1' => function($n) {
-                     return eq($n,
-                               trampoline(
-                                 y(function($f, $m, $n, $_) {
-                                     return ($m < $n)? [false, $f($m+1, $n)]
-                                                     : [true,  $m];
-                                   }, 0, $n)));
+                     $x = $n % 100;
+                     return trampoline(
+                               y(function($f, $m, $n, $_) {
+                                   return ($m < $n)? [false, $f($m+1, $n)]
+                                                   : [true,  $m];
+                                 }, 0, $x))
+                       !== $x;
                    },
-  'loop1'       => function($n) {
+  'loop1'       => function($x) {
+                     $n = $x % 100;
                      $lhs = loop(function($x, $m) use ($n) {
                                    return [$m >= $n, snoc($m, $x)];
                                  }, []);
                      $rhs = upto($n + 1);
-                     return eq($lhs, $rhs)?:
-                            dump(get_defined_vars());
+                     return ($lhs === $rhs)? 0 : dump(get_defined_vars());
                    },
 
   // Taking fixed points
-  'y1' => function($n) {
-            return eq(y(function($f, $m) use ($n) {
-                          return eq($m, $n)? $m
-                                           : $f($m + 1);
-                        }),
-                      $n);
+  'y1' => function($x) {
+            $n = $x % 100;
+            return y(function($f, $m) use ($n) {
+                          return ($m === $n)? $m
+                                            : $f($m + 1);
+                     }, 0)
+                   !== $n;
           },
 
-  'stream_take1' => function($n) {
+  'stream_take1' => function($x) {
+                      $n = $x % 100;
                       $lhs = upto($n);
                       $rhs = stream_take($n, y(function($f, $n, $_) {
                                                  return [$n, $f($n+1)];
                                                }, 0));
-                      return eq($lhs, $rhs)?:
-                             dump(get_defined_vars());
+                      return ($lhs === $rhs)? 0 : dump(get_defined_vars());
                     },
-*/
 ]);
 
 $failures = runtests(null);
