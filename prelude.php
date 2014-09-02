@@ -174,8 +174,9 @@ defun('tabulate',  function($h1, $h2, $arr) {
 
 defun('shell', 'shell_exec');
 defun('mem',   function($cmd) {
+                 $time = trim(substr(`whereis time`, 6));
                  return intval(shell(
-                   "/usr/bin/time -f '%M' $cmd 2>&1 1> /dev/null"));
+                   "$time -f '%M' $cmd 2>&1 1> /dev/null"));
                });
 
 defun('runphp', function($f, $arg) {

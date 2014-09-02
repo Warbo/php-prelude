@@ -65,14 +65,14 @@ deftests([
                   return call(compose(plus($x), mult($y)), $z)
                          !== $x + ($y * $z);
                 },
-/*
   'compose2' => function($x, $y, $z) {
                   return call(compose(mult($x), plus($y)), $z)
                          !== $x * ($y + $z);
                 },
   'compose3' => function($x, $y, $z) {
-                  return call(compose(flip('map', [$x, $y]), 'plus'), $z)
-                         !== [$x + $z, $y + $z];
+                  $f = flip('map', [$x, $y]);
+                  $c = compose($f, 'plus');
+                  return $c($z) !== [$x + $z, $y + $z];
                 },
   'compose4' => function($n) {
                   return call(compose('id', 'id'), $n)
@@ -87,23 +87,26 @@ deftests([
                          !== $x + $y + $z;
                 },
   'compose7' => function($x, $y, $z) {
-                  return call(compose(flip('map', [$x, $y]), 'plus'), $z)
-                         !== [$x + $z, $y + $z];
+                  $f = flip('map', [$x, $y]);
+                  $c = compose($f, 'plus');
+                  return $c($z) !== [$x + $z, $y + $z];
                 },
   'compose8' => function($x, $y) {
-                  return call(compose(with($x), 'plus'), $y) !== $x + $y;
+                  $c = compose(with($x), 'plus');
+                  return $c($y) !== $x + $y;
+                },
+
+  'sum' => function() {
+             return sum($xs = range(0, mt_rand(1, 100)))
+                    !== array_reduce($xs, 'plus', 0);
+           },
+  'random1' => function() { return !is_int(random(null)); },
+  'mem1' => function() { return mem('true') <= 0; },
+  'upto1' => function($n) { return count(upto($n % 100)) !== $n % 100; },
+  'between1' => function() {
+                  return between(5, 10) !== [5, 6, 7, 8, 9, 10];
                 },
 /*
-  'sum' => function() {
-      return eq(sum($xs = range(0, mt_rand(1, 100))),
-        array_reduce($xs, 'plus', 0));
-  },
-  'random1' => function() { return is_int(random(null)); },
-  'mem1' => function($n) { return mem('true') > 0; },
-  'upto1' => function($n) { return eq(count(upto($n)), $n); },
-  'between1' => function() {
-      return eq(between(5, 10), [5, 6, 7, 8, 9, 10]);
-  },
   'b_then' => function($n) {
       return eq(branch(thunk($n),
       null,
