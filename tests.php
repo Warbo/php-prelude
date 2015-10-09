@@ -169,6 +169,11 @@ deftests([
                                                }, 0));
                       return ($lhs === $rhs)? 0 : dump(get_defined_vars());
                     },
+
+  // Tabulating data
+  'tabulate1' => function($a, $b, $c, $d, $e, $f, $g) {
+                   tabulate($a, $b, $c])
+                 }
 ]);
 
 $failures = runtests(null);
