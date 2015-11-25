@@ -124,7 +124,7 @@ deftests([
 
   // General recursion
   'until1'      => function($n) {
-                     $x = $n % 100;
+                     $x = $n % 8;
                      return until(function($args) use ($x) {
                                     list($m, $arr) = $args;
                                     return [$m === $x,
@@ -134,7 +134,7 @@ deftests([
                        !== [$x+1, upto($x+1)];
                    },
   'trampoline1' => function($n) {
-                     $x = $n % 100;
+                     $x = $n % 8;
                      return trampoline(
                                y(function($f, $m, $n, $_) {
                                    return ($m < $n)? [false, $f($m+1, $n)]
@@ -143,7 +143,7 @@ deftests([
                        !== $x;
                    },
   'loop1'       => function($x) {
-                     $n = $x % 100;
+                     $n = $x % 8;
                      $lhs = loop(function($x, $m) use ($n) {
                                    return [$m >= $n, snoc($m, $x)];
                                  }, []);
@@ -153,7 +153,7 @@ deftests([
 
   // Taking fixed points
   'y1' => function($x) {
-            $n = $x % 100;
+            $n = $x % 4;
             return y(function($f, $m) use ($n) {
                           return ($m === $n)? $m
                                             : $f($m + 1);
@@ -162,7 +162,7 @@ deftests([
           },
 
   'stream_take1' => function($x) {
-                      $n = $x % 100;
+                      $n = $x % 8;
                       $lhs = upto($n);
                       $rhs = stream_take($n, y(function($f, $n, $_) {
                                                  return [$n, $f($n+1)];
@@ -173,6 +173,12 @@ deftests([
   // Tabulating data
   'tabulate1' => function($a, $b, $c, $d, $e, $f, $g) {
                    tabulate($a, $b, $c])
+                 },
+
+  'fanout'    => function($x) {
+                   list($s, $m) = fanout(['strval', 'minus'], $x);
+                   if ($s !== strval($x)) return true;
+                   if ($m !== -1 * $x) return true;
                  }
 ]);
 
