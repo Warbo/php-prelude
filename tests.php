@@ -170,6 +170,16 @@ deftests([
                       return ($lhs === $rhs)? 0 : dump(get_defined_vars());
                     },
 
+  'tabulate1' => function($a, $b, $c, $d, $e, $f) {
+                   $result = tabulate($a, $b, [$c => $d, $e => $f]);
+                   return (strpos($result, "$c $d") === FALSE);
+                 },
+
+  'tabulate2' => function($a, $b, $c, $d, $e, $f) {
+                   $result = tabulate($a, [$b], [$c => $d]);
+                   return (strpos($result, "$a $b") === FALSE);
+                 },
+
   'fanout'    => function($x) {
                    list($s, $m) = fanout(['strval', 'minus'], $x);
                    if ($s !== strval($x)) return true;

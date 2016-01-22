@@ -162,15 +162,15 @@ defun('benchmark', function($f, $x) {
                      return microtime(true) - $time;
                    });
 
-defun('tabulate',  function($h1, $h2_, $arr) {
+defun('tabulate',  function($h1, $h2, $arr) {
                      return key_foldr(function($str, $row) {
                                         list($n, $v) = $row;
                                         $v = is_array($v)? implode(' ', $v) : $v;
                                         $s = format($v);
                                         return "{$str}\n{$n} {$s}";
                                       },
-                                      "$h1 " . is_array($h2)? implode(' ', $h2)
-                                                            : $h2,
+                                      "$h1 " . (is_array($h2)? implode(' ', $h2)
+                                                             : $h2),
                                       $arr);
                    });
 
