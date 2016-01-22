@@ -172,7 +172,7 @@ deftests([
 
   // Tabulating data
   'tabulate1' => function($a, $b, $c, $d, $e, $f, $g) {
-                   tabulate($a, $b, $c])
+                   tabulate($a, $b, $c))
                  },
 
   'fanout'    => function($x) {
