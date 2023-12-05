@@ -66,7 +66,7 @@ defuns([
   'instance' => function($x, $y) { return $x instanceof $y; },
   'power'    => nary('pow', 2),
   'apply'        => nary('call_user_func'),
-  'array_'       => nary('func_get_args'),
+  'array_'       => nary(function() { return func_get_args(); }),
   'discard_keys' => function($arr) { return array_combine($arr, $arr); },
   'map'          => nary('array_map', 2),
   'map_keys'     => function($f, $a) {
